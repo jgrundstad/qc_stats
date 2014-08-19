@@ -140,7 +140,7 @@ class aligned_stats(object):
   @rg_file.setter
   def rg_file(self, rgfile):
     '''
-    Triggers lots of stats gathering from periferal files
+    Triggers lots of stats gathering from peripheral files
     '''
     self._rg_file = rgfile
     self._rg_file_path = os.path.dirname(rgfile)
