@@ -87,7 +87,7 @@ def compare_with_hgac(filename, seq_d, unaligned_d, aligned_d):
   print as results table
   """
   hgac = open(filename, 'r')
-  print "BID\tHGAC_files\tBeagle_files\tUnaligned_files\tAligned_files\tContig_rmdup_pct\tReadgroup_rmdup_pct\ttotal_reads\tmapped\t%mapped\tDoc\t%_8x" # header
+  print "BID\tHGAC_files\tBeagle_files\tUnaligned_files\tAligned_files\tContig_rmdup_pct\tReadgroup_rmdup_pct\ttotal_reads\tmapped\t%mapped\tDoC\t%_8x" # header
   for line in hgac:
     line = line.strip()
     try:
