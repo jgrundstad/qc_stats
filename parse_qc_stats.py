@@ -138,8 +138,8 @@ def main():
   seq_dict = count_seq_files(args.seq_dir)
   aligned_dict = parse_aligned_stats(args.readgroups_file, seq_dict)
   unaligned_dict = count_unaligned_readgroups(args.unaligned_dir, seq_dict)
-
   compare_with_hgac(args.hgac_file, seq_dict, unaligned_dict, aligned_dict)
+
 
 if __name__ == '__main__':
   main()
