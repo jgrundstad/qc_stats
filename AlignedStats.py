@@ -4,10 +4,11 @@ import re
 import sys
 import pysam
 import rmdup_calc
+import fnmatch
+import util
 
 class aligned_stats(object):
 
-  __GENOME_SIZE = 3101804739
 
   def __init__(self, id):
     self._id = id
@@ -114,7 +115,7 @@ class aligned_stats(object):
     try:
       cov_file = open(self._rg_file_path + "/" + self._id + ".coverage", 'r')
       lines = cov_file.readlines()
-      self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / self.__GENOME_SIZE) * 100.0
+      self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / util.GENOME_SIZE) * 100.0
     except Exception as e:
       print >>sys.stderr, "Problem calculating 8x coverage for " + self._id
       self._cov_8x = 0.0
@@ -128,12 +129,18 @@ class aligned_stats(object):
 
   def calc_mapability(self):
     try:
-      flagstats = open(self._rg_file_path + '/' + self._id + '.bam.flagstat', 'r')
-      self._total_reads = int(flagstats.readline().split(' ')[0])
-      garbage = flagstats.readline()
-      mo = re.match(r'(\d+) .* mapped \((\d+\.\d+)%', flagstats.readline())
-      self._mapped_reads = int(mo.group(1))
-      self._pct_mapped = float(mo.group(2))
+      '''Grab the .flagstat or .flagstats file, not the flagstat.log file'''
+      flagstat_file = ''
+      for file in glob.glob(self._rg_file_path + os.sep + self._id + '.bam.flagstat*'):
+        if not fnmatch.fnmatch(file, '*.log'):
+          flagstat_file = file
+
+      d = util.parse_flagstats(flagstats_file)
+      self._total_reads = d['total_reads']
+      self._mapped_reads = d['mapped_reads']
+      self._pct_mapped = d['pct_mapped']
+    except KeyError:
+      print >>sys.stderr, "ERROR: no flagstat(s) file for " + self._id
     except Exception as e:
       print >>sys.stderr, "Problem calculating % mapability for " + self._id
 
