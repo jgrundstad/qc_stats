@@ -18,6 +18,38 @@ Generate data accounting, and alignment stats on "
 
 GENOME_SIZE = 3101804739
 
+def rl(fh, i):
+  return fh.readline().split(' ')[i]
+
+def parse_flagstats(flagstats_file):
+  d = dict()
+  try:
+    fh = open(flagstats_file, 'r')
+    '''
+    895854478 + 0 in total (QC-passed reads + QC-failed reads)
+    0 + 0 duplicates
+    0 + 0 mapped (0.00%:-nan%)
+    895854478 + 0 paired in sequencing
+    447927239 + 0 read1
+    447927239 + 0 read2
+    0 + 0 properly paired (0.00%:-nan%)
+    0 + 0 with itself and mate mapped
+    0 + 0 singletons (0.00%:-nan%)
+    0 + 0 with mate mapped to a different chr
+    0 + 0 with mate mapped to a different chr (mapQ>=5)
+    '''
+    d['total_reads'] = int(rl(fh, 0))
+    d['duplicates'] = int(rl(fh, 0))
+    line = fh.readline()
+    d['mapped_reads'] = int(line.split(' ')[0])
+    d['pct_mapped'] = float(line.split(' ')[4].split(r'(')[1].split(r'%')[0])
+    d['paired'] = int(rl(fh, 0))
+    d['read1'] = int(rl(fh, 0))
+    d['read2'] = int(rl(fh, 0))
+    return d
+  except IOError:
+    print >>sys.stderr, "ERROR: unable to open " + flagstats_file + "for reading."
+    return None
 
 def count_seq_files(seq_dir):
   """
@@ -62,6 +94,24 @@ def count_unaligned_readgroups(dir_path, seq_dict):
   return d 
 
 
+def parse_unaligned_reads(dir_path, seq_dict):
+  """
+  grab the # of reads from the unaligned .bam.flagstats
+  """
+  d = dict()
+  for id in seq_dict:
+    try:
+      flagstats_file = dir_path + "/" + id + "/" + id + '.bam.flagstats'
+      fd = parse_flagstats(flagstats_file)
+      d[id] = fd['total_reads']
+    except:
+      print >>sys.stderr, "problem parsing " + flagstats_file
+      e = sys.exc_info()[0]
+      print >>sys.stderr, e
+      d[id] = 0
+  return d
+
+
 def parse_aligned_stats(rg_file_paths, seq_dict):
   aligned_d = dict()
   f = open(rg_file_paths, 'r')
@@ -80,14 +130,14 @@ def parse_aligned_stats(rg_file_paths, seq_dict):
   return aligned_d
 
 
-def compare_with_hgac(filename, seq_d, unaligned_d, aligned_d):
+def compare_with_hgac(filename, seq_d, unaligned_d, unaligned_reads, aligned_d):
   """
   Parse HGAC record of files genearted per library
   Annotate with the other dicts
   print as results table
   """
   hgac = open(filename, 'r')
-  print "BID\tHGAC_files\tBeagle_files\tUnaligned_files\tAligned_files\tContig_rmdup_pct\tReadgroup_rmdup_pct\ttotal_reads\tmapped\t%mapped\tDoC\t%_8x" # header
+  print "BID\tHGAC_files\tBeagle_files\tUnaligned_files\tAligned_files\tRaw_reads\tContig_rmdup_pct\tReadgroup_rmdup_pct\ttotal_reads\tmapped\t%mapped\tDoC\t%_8x" # header
   for line in hgac:
     line = line.strip()
     try:
@@ -99,10 +149,11 @@ def compare_with_hgac(filename, seq_d, unaligned_d, aligned_d):
       else:
         a_stats = AlignedStats.aligned_stats(id)
 
-      print "%s\t%i\t%i\t%i\t%.4f\t%.4f\t%i\t%i\t%.2f\t%.2f\t%.2f" % (line,
+      print "%s\t%i\t%i\t%i\t%i\t%.4f\t%.4f\t%i\t%i\t%.2f\t%.2f\t%.2f" % (line,
           seq_d[id],
           unaligned_d[id],
           a_stats.number_of_files,
+          unaligned_reads[id],
           a_stats.contig_rmdup_pct,
           a_stats.readgroup_rmdup_pct,
           a_stats.total_reads,
@@ -115,7 +166,7 @@ def compare_with_hgac(filename, seq_d, unaligned_d, aligned_d):
       print line
     except:
       print "%s" % line
-      e = sys.exc_info()[0]
+      e = sys.exc_info()
       sys.stderr.write(id + ' had no entry in at least one of the dicts: ' + str(e) + '\n')
 
 
@@ -138,7 +189,9 @@ def main():
   seq_dict = count_seq_files(args.seq_dir)
   aligned_dict = parse_aligned_stats(args.readgroups_file, seq_dict)
   unaligned_dict = count_unaligned_readgroups(args.unaligned_dir, seq_dict)
-  compare_with_hgac(args.hgac_file, seq_dict, unaligned_dict, aligned_dict)
+  unaligned_reads = parse_unaligned_reads(args.unaligned_dir, seq_dict)
+  
+  compare_with_hgac(args.hgac_file, seq_dict, unaligned_dict, unaligned_reads, aligned_dict)
 
 
 if __name__ == '__main__':
