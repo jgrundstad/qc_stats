@@ -7,6 +7,7 @@ import subprocess
 import pysam
 import rmdup_calc
 import AlignedStats
+import util
 """
 Generate data accounting, and alignment stats on "
 1) HGAC google doc - what they generated
@@ -15,8 +16,6 @@ Generate data accounting, and alignment stats on "
 4) location of aligned .bam files
 
 """
-
-GENOME_SIZE = 3101804739
 
 
 def count_seq_files(seq_dir):
@@ -78,6 +77,10 @@ def parse_aligned_stats(rg_file_paths, seq_dict):
       e = sys.exc_info()[0]
       print >>sys.stderr, e
   return aligned_d
+
+
+def get_hgac_ids(keyfile):
+  d = dict() # ID[file_count]
 
 
 def compare_with_hgac(filename, seq_d, unaligned_d, aligned_d):

@@ -35,3 +35,5 @@ def parse_flagstats(flagstats_file):
   except IOError:
     print >>sys.stderr, "ERROR: unable to open " + flagstats_file + "for reading."
     return None
+
+
