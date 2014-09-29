@@ -21,22 +21,22 @@ class HgacRethinkdb:
 
 
   def __read_keyfile(self, keyfile):
-    try:
-      fh = open(keyfile, 'r')
-      AUTH_KEY = fh.readline().strip()
-      fh.close()
-      return AUTH_KEY
-    except:
-      print >>sys.stderr, "[HgacRethinkdb exception] - Unable to parse keyfile: " + keyfile
-      sys.exit(1)
+    #try:
+    fh = open(keyfile, 'r')
+    AUTH_KEY = fh.readline().strip()
+    fh.close()
+    return AUTH_KEY
+    #except:
+    #  print >>sys.stderr, "[HgacRethinkdb exception] - Unable to parse keyfile: " + keyfile
+    #  sys.exit(1)
 
 
   def __connect(self, host, AUTH_KEY):
-    try: 
-      return r.connect(host, auth_key=AUTH_KEY)
-    except:
-      print >>sys.stderr, "[HgacRethinkdb excpetion] - Unable to connect to host: " + host
-      sys.exit(1)
+    #try: 
+    return r.connect(host, auth_key=AUTH_KEY)
+    #except:
+    #  print >>sys.stderr, "[HgacRethinkdb excpetion] - Unable to connect to host: " + host
+    #  sys.exit(1)
 
 
   def print_columns(self, table, cols):

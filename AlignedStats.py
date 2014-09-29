@@ -98,51 +98,46 @@ class aligned_stats(object):
     self._number_of_files = num_lines * 2
 
   def calc_rmdup_stats(self):
-    try:
-      self.contig_rmdup_pct = rmdup_calc.combine(glob.glob(
-        self._rg_file_path + '/' + self._id + '.aln*metrics'))
-    except:
-      print >>sys.stderr, "Can't open contig metrics files for " + self._id
-      self.contig_rmdup_pct = 0.0
-    try:
-      self.readgroup_rmdup_pct = rmdup_calc.combine(glob.glob(
-        self._rg_file_path + '/' + self._id + '.' + self._id + '*metrics'))
-    except:
-      print >>sys.stderr, "Can't open readgroup metrics files for " + self._id
-      self.readgroup_rmdup_pct = 0.0
+    #try:
+    self.contig_rmdup_pct = rmdup_calc.combine(glob.glob(
+      self._rg_file_path + '/' + self._id + '.aln*metrics'))
+    #except:
+    #  print >>sys.stderr, "Can't open contig metrics files for " + self._id
+    #  self.contig_rmdup_pct = 0.0
+    #try:
+    self.readgroup_rmdup_pct = rmdup_calc.combine(glob.glob(
+      self._rg_file_path + '/' + self._id + '.' + self._id + '*metrics'))
+    #except:
+    #  print >>sys.stderr, "Can't open readgroup metrics files for " + self._id
+    #  self.readgroup_rmdup_pct = 0.0
 
   def calc_pct_8x(self):
-    try:
-      cov_file = open(self._rg_file_path + "/" + self._id + ".coverage", 'r')
-      lines = cov_file.readlines()
-      self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / util.GENOME_SIZE) * 100.0
-    except Exception as e:
-      print >>sys.stderr, "Problem calculating 8x coverage for " + self._id
-      self._cov_8x = 0.0
+    #try:
+    cov_file = open(self._rg_file_path + "/" + self._id + ".coverage", 'r')
+    lines = cov_file.readlines()
+    self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / util.GENOME_SIZE) * 100.0
+    #except Exception as e:
+    #  print >>sys.stderr, "Problem calculating 8x coverage for " + self._id
+    #  self._cov_8x = 0.0
 
   def calc_depth_of_coverage(self):
-    try:
-      with open(self._rg_file_path + "/" + self._id + ".DoC", 'r') as f:
-        self._depth_of_coverage = float(f.readline().strip())
-    except Exception as e:
-      print >>sys.stderr, "Problem calculating DoC for " + self._id
+    #try:
+    with open(self._rg_file_path + "/" + self._id + ".DoC", 'r') as f:
+      self._depth_of_coverage = float(f.readline().strip())
+    #except Exception as e:
+    #  print >>sys.stderr, "Problem calculating DoC for " + self._id
 
   def calc_mapability(self):
     try:
       '''Grab the .flagstat or .flagstats file, not the flagstat.log file'''
-      flagstat_file = ''
-      for file in glob.glob(self._rg_file_path + os.sep + self._id + '.bam.flagstat*'):
-        if not fnmatch.fnmatch(file, '*.log'):
-          flagstat_file = file
-
-      d = util.parse_flagstats(flagstats_file)
+      flagstat_file = self._rg_file_path + os.sep + self._id + '.bam.flagstat'
+      d = util.parse_flagstats(flagstat_file)
       self._total_reads = d['total_reads']
       self._mapped_reads = d['mapped_reads']
       self._pct_mapped = d['pct_mapped']
-    except KeyError:
-      print >>sys.stderr, "ERROR: no flagstat(s) file for " + self._id
-    except Exception as e:
-      print >>sys.stderr, "Problem calculating % mapability for " + self._id
+    except NameError:
+      print >>sys.stderr, "ERROR: no flagstat_file for: " + self._id, " " + flagstat_file
+      sys.exit(1)
 
   @rg_file.setter
   def rg_file(self, rgfile):
