@@ -12,7 +12,7 @@ import HgacRethinkdb
 from collections import defaultdict
 """
 Generate data accounting, and alignment stats on "
-1) HGAC rethinkdb - what they generated
+1) HGAC rethinkdb - metadata describing the samples, and what was generated
 2) Raw data directory - seq files copied from bionimbus
 3) location of unaligned .bam files
 4) location of alignment RGfiles.txt files
@@ -20,9 +20,10 @@ Generate data accounting, and alignment stats on "
 """
 
 # globals
-TABLE = defaultdict(lambda: defaultdict(int)) # dict of dicts e.g. TABLE['BID']['HGAC_FILES']
-HEADERS = ['BID', 'HGAC_files', 'Beagle_files', 'Unaligned_files', 'Aligned_files', 'Unaligned_reads',
-    'Contig_rmdup_pct', 'Readgroup_rmdup_pct', 'total_reads', 'mapped', '%mapped', 
+TABLE = defaultdict(lambda: defaultdict(int)) # contains gathered metadata
+HEADERS = ['BID', 'HGAC_files', 'Beagle_files', 'Unaligned_files', 
+    'Aligned_files', 'Unaligned_reads', 'Contig_rmdup_pct', 
+    'Readgroup_rmdup_pct', 'total_reads', 'mapped', '%mapped', 
     'Sequencing_depth', 'Doc', '%_8x']
 
 
@@ -30,16 +31,11 @@ def count_seq_files(seq_dir):
   """
   Count number of paired-end seq files per library
   """
-  #try:
   for seqfile in glob.glob(seq_dir + '/2*_[1-8]_[12]_sequence.txt.gz'):
     match = re.search(r'(2\d+-\d+)_', os.path.basename(seqfile))
     if match:
       bid = match.group(1)
       TABLE[bid][HEADERS[2]] += 1
-  #except:
-  #  print >>sys.stderr, '[parse_qc_stats] - Error globbing sequence.txt.gz files in ' + seq_dir
-  #  e = sys.exc_info()
-  #  print >>sys.stderr, e
 
 
 def file_counts_by_readgroups(dir_path):
@@ -124,13 +120,13 @@ def main():
   """
   p = argparse.ArgumentParser()
   p.add_argument('-r', dest='readgroups_file', action='store', required=True, 
-      help='List of all RGfiles.txt file paths')
+      help='List of all RGfiles.txt file paths, used to locate alignment stats per sample')
   p.add_argument('-k', dest='keyfile', action='store', required=True,
       help='RethinkDB keyfile required to query HGAC metadata')
   p.add_argument('-s', dest='seq_dir', action='store', required=True,
-      help='Directory containing raw seq data files')
+      help='Directory containing all raw seq data files')
   p.add_argument('-u', dest='unaligned_dir', action='store', required=True,
-      help='Directory containing unaligned bam files')
+      help='Directory containing per-sample directories with unaligned bam files')
 
   args = p.parse_args()
   load_hgac_ids(args.keyfile) # into TABLE dict
