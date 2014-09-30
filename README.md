@@ -1,6 +1,6 @@
 qc_stats
 ========
-
+```
 usage: parse_qc_stats.py [-h] -r READGROUPS_FILE -k KEYFILE -s SEQ_DIR -u
                          UNALIGNED_DIR
 
@@ -12,3 +12,4 @@ optional arguments:
   -s SEQ_DIR          Directory containing all raw seq data files
   -u UNALIGNED_DIR    Directory containing per-sample directories with
                       unaligned bam files
+```
