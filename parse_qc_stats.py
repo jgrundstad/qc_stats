@@ -21,9 +21,9 @@ Generate data accounting, and alignment stats on "
 
 # globals
 TABLE = defaultdict(lambda: defaultdict(int)) # dict of dicts e.g. TABLE['BID']['HGAC_FILES']
-HEADERS = ['BID', 'HGAC_files', 'Beagle_files', 'Unaligned_files', 'Aligned_files', 
+HEADERS = ['BID', 'HGAC_files', 'Beagle_files', 'Unaligned_files', 'Aligned_files', 'Unaligned_reads',
     'Contig_rmdup_pct', 'Readgroup_rmdup_pct', 'total_reads', 'mapped', '%mapped', 
-    'Doc', '%_8x']
+    'Sequencing_depth', 'Doc', '%_8x']
 
 
 def count_seq_files(seq_dir):
@@ -58,6 +58,20 @@ def file_counts_by_readgroups(dir_path):
       print >>sys.stderr, "[parse_qc_stats] - Unable to count readgroups in bamfile: " + bam_file
    
 
+def parse_unaligned_reads(dir_path):
+  for bid in TABLE:
+    try:
+      flagstats_file = dir_path + os.sep + bid + os.sep + bid + '.bam.flagstats'
+      stats = util.parse_flagstats(flagstats_file)
+      TABLE[bid][HEADERS[5]] = stats['total_reads']
+      seq_depth = (stats['total_reads'] * 100.0) / util.GENOME_SIZE
+      TABLE[bid][HEADERS[11]] = "%.2f" % seq_depth
+    except ValueError:
+      print >>sys.stderr, "[parse_qc_stats] - Looks like flagstats file is empty: " + flagstats_file
+    except KeyError:
+      print >>sys.stderr, "[parse_qc_stats] - Looks like flagstats file is non-existant: " + flagstats_file
+
+
 def parse_aligned_stats(rg_file_paths):
   '''
   All aligned datasets will have an RGfiles.txt, provided by the rg_file_paths
@@ -70,14 +84,15 @@ def parse_aligned_stats(rg_file_paths):
     bid = os.path.split(data_path)[1]
     a_stats = AlignedStats.aligned_stats(bid)
     a_stats.rg_file = file_path # triggers loading of many alignment stats
+
     TABLE[bid][HEADERS[4]] = a_stats.number_of_files # load the TABLE
-    TABLE[bid][HEADERS[5]] = a_stats.contig_rmdup_pct
-    TABLE[bid][HEADERS[6]] = a_stats.readgroup_rmdup_pct
-    TABLE[bid][HEADERS[7]] = a_stats.total_reads
-    TABLE[bid][HEADERS[8]] = a_stats.mapped_reads
-    TABLE[bid][HEADERS[9]] = a_stats.pct_mapped
-    TABLE[bid][HEADERS[10]] = a_stats.depth_of_coverage
-    TABLE[bid][HEADERS[11]] = a_stats.cov_8x
+    TABLE[bid][HEADERS[6]] = "%.4f" % a_stats.contig_rmdup_pct
+    TABLE[bid][HEADERS[7]] = "%.4f" % a_stats.readgroup_rmdup_pct
+    TABLE[bid][HEADERS[8]] = a_stats.total_reads
+    TABLE[bid][HEADERS[9]] = a_stats.mapped_reads
+    TABLE[bid][HEADERS[10]] = "%.2f" % a_stats.pct_mapped
+    TABLE[bid][HEADERS[12]] = "%.2f" % a_stats.depth_of_coverage
+    TABLE[bid][HEADERS[13]] = "%.2f" % a_stats.cov_8x
   sys.stderr.write('\n')
 
 def load_hgac_ids(keyfile):
@@ -121,10 +136,12 @@ def main():
   load_hgac_ids(args.keyfile) # into TABLE dict
   print >>sys.stderr, "Counting sequence files"
   count_seq_files(args.seq_dir)
-  print >>sys.stderr, "Gathering aligned stats"
-  parse_aligned_stats(args.readgroups_file)
   print >>sys.stderr, "counting unaligned files"
   file_counts_by_readgroups(args.unaligned_dir)
+  print >>sys.stderr, "Counting unaligned reads"
+  parse_unaligned_reads(args.unaligned_dir)
+  print >>sys.stderr, "Gathering aligned stats"
+  parse_aligned_stats(args.readgroups_file)
 
   regurgitate()
 

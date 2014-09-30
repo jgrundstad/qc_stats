@@ -33,7 +33,7 @@ def parse_flagstats(flagstats_file):
     d['read2'] = int(rl(fh, 0))
     return d
   except IOError:
-    print >>sys.stderr, "ERROR: unable to open " + flagstats_file + "for reading."
-    return None
+    print >>sys.stderr, "ERROR: unable to open for reading: " + flagstats_file
+    return d
 
 
