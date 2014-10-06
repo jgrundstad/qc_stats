@@ -1,4 +1,5 @@
 import rethinkdb as r
+from collections import defaultdict
 import sys
 
 class HgacRethinkdb:
@@ -21,38 +22,26 @@ class HgacRethinkdb:
 
 
   def __read_keyfile(self, keyfile):
-    #try:
-    fh = open(keyfile, 'r')
-    AUTH_KEY = fh.readline().strip()
-    fh.close()
-    return AUTH_KEY
-    #except:
-    #  print >>sys.stderr, "[HgacRethinkdb exception] - Unable to parse keyfile: " + keyfile
-    #  sys.exit(1)
+    try:
+      fh = open(keyfile, 'r')
+      AUTH_KEY = fh.readline().strip()
+      fh.close()
+      return AUTH_KEY
+    except IOError:
+      print >>sys.stderr, "[HgacRethinkdb exception] - Unable to parse keyfile: " + keyfile
+      sys.exit(1)
 
 
   def __connect(self, host, AUTH_KEY):
-    #try: 
     return r.connect(host, auth_key=AUTH_KEY)
-    #except:
-    #  print >>sys.stderr, "[HgacRethinkdb excpetion] - Unable to connect to host: " + host
-    #  sys.exit(1)
 
 
   def print_columns(self, table, cols):
     for record in r.db(self._db).table(table).pluck(cols).run(self._conn):
-      print('\t'.join([str(x) for x in record.values()]))
+      print('\t'.join([str(x) for x in sorted(record.values())]))
 
 
-  def get_pair_columns(self, table, cols):
-    d = dict()
-    for record in r.db(self._db).table(table).pluck(cols).run(self._conn):
-      if record.values()[1]:
-        d[record.values()[0]] = record.values()[1]
-      else:
-        d[record.values()[0]] = '-'
-
-    return d
-
+  def get_columns(self, table, cols):
+    return list(r.db(self._db).table(table).pluck(cols).run(self._conn))
 
 
