@@ -112,20 +112,23 @@ class aligned_stats(object):
     #  self.readgroup_rmdup_pct = 0.0
 
   def calc_pct_8x(self):
-    #try:
-    cov_file = open(self._rg_file_path + "/" + self._id + ".coverage", 'r')
-    lines = cov_file.readlines()
-    self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / util.GENOME_SIZE) * 100.0
-    #except Exception as e:
-    #  print >>sys.stderr, "Problem calculating 8x coverage for " + self._id
-    #  self._cov_8x = 0.0
+    try:
+      filename = self._rg_file_path + "/" + self._id + ".coverage"
+      cov_file = open(filename, 'r')
+      lines = cov_file.readlines()
+      self._cov_8x = (float(sum(int(line.split()[2]) for line in lines[8:])) / util.GENOME_SIZE) * 100.0
+    except IOError as ioe:
+      print >>sys.stderr, "No coverage file: " + filename
+      self._cov_8x = 0.0
 
   def calc_depth_of_coverage(self):
-    #try:
-    with open(self._rg_file_path + "/" + self._id + ".DoC", 'r') as f:
-      self._depth_of_coverage = float(f.readline().strip())
-    #except Exception as e:
-    #  print >>sys.stderr, "Problem calculating DoC for " + self._id
+    try:
+      filename = self._rg_file_path + "/" + self._id + ".DoC"
+      with open(filename, 'r') as f:
+        self._depth_of_coverage = float(f.readline().strip())
+    except IOError as ioe:
+      print >>sys.stderr, "Unable to open .DoC file: " + filename
+      self._depth_of_coverage = 0.0
 
   def calc_mapability(self):
     try:
@@ -135,9 +138,8 @@ class aligned_stats(object):
       self._total_reads = d['total_reads']
       self._mapped_reads = d['mapped_reads']
       self._pct_mapped = d['pct_mapped']
-    except NameError:
-      print >>sys.stderr, "ERROR: no flagstat_file for: " + self._id, " " + flagstat_file
-      sys.exit(1)
+    except (IOError, KeyError):
+      print >>sys.stderr, "Unable to open/parse .flagstat file: " + flagstat_file
 
   @rg_file.setter
   def rg_file(self, rgfile):
