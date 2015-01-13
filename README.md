@@ -1,5 +1,8 @@
 qc_stats
 ========
+
+To be used in conjunction with the SwiftSeq pipeline (currently implemented on Beagle)
+
 ```
 usage: parse_qc_stats.py [-h] -r READGROUPS_FILE -k KEYFILE -s SEQ_DIR -u
                          UNALIGNED_DIR
